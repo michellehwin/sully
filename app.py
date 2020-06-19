@@ -17,9 +17,12 @@ def results():
 
     # fetch action from json
     action = req.get('queryResult').get('action')
+    print(action)
+    parameters = req.get('queryResult').get('parameters').get('zip-code')
+    print(parameters)
 
     # return a fulfillment response
-    return {'fulfillmentText': 'This is a response from webhook.'}
+    return {'fulfillmentText': 'This is a response from webhook.' + parameters}
 
 # create a route for webhook
 @app.route('/webhook', methods=['GET', 'POST'])
