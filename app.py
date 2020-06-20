@@ -50,6 +50,8 @@ def results():
 
         if (zipCodeFromRequest == "77002"):
             city = "Houston"
+        elif (zipCodeFromRequest == "76016"):
+            city = "Arlington"
         else:
             zipParams = {"zipcode": zipCodeFromRequest}
             zipAPI = requests.get(
@@ -62,67 +64,62 @@ def results():
             city).collection(category)
         print("this is the document id: " + cities_ref.id)
         docs = cities_ref.stream()
+
         storeList = []
+        card = None
         for doc in docs:
             storedata = doc.to_dict()
-            storeList.append(storedata)
-            print(storedata["name"])
-            return {
-                "payload": {
-                    "google": {
-                        "expectUserResponse": True,
-                        "noInputPrompts": [
+            print("putting this into a card: " + storedata["name"])
+            card = {
+                "title": storedata["name"],
+                "openUrlAction": {
+                    "url": "https://example.com"
+                },
+                "description": storedata["contact"],
+                "footer": "Item 1 footer",
+            }
+            storeList.append(card)
+            storeList.append(card)
 
-                        ],
-                        "richResponse": {
-                            "items": [
-                                {
-                                    "simpleResponse": {
-                                        "textToSpeech": "Welcome to this Basic Card",
-                                        "displayText": "Welcome to this Basic Card"
-                                    }
-                                },
-                                {
-                                    "basicCard": {
-                                        # "buttons": [
-                                        #     {
-                                        #         "title": "Button Title",
-                                        #         "openUrlAction": {
-                                        #             "url": "https://some.url"
-                                        #         }
-                                        #     }
-                                        # ],
-                                        "formattedText": storedata["contact"] + "\n" + storedata["address"],
-                                        # "image": {
-                                        #     "url": "http://some_image.jpg",
-                                        #     "accessibilityText": "Accessibility text describing the image"
-                                        # },
-                                        "title": storedata["name"]
-                                    }
+        finalJSON = {
+            "payload": {
+                "google": {
+                    "expectUserResponse": True,
+                    "richResponse": {
+                        "items": [
+                            {
+                                "simpleResponse": {
+                                    "textToSpeech": "Here's an example of a browsing carousel."
                                 }
-                            ],
-                            # "suggestions": [
-                            #     {
-                            #         "title": "Aléatoire"
-                            #     },
-                            #     {
-                            #         "title": "Top"
-                            #     }
-                            # ]
-                        }
+                            },
+                            {
+                                "carouselBrowse": {
+                                    "items": 
+                                        storeList
+                                    
+                                }
+                            }
+                        ]
                     }
                 }
             }
-        print(storeList)
-    # return a fulfillment response
-    if(category != None and action != None):
-        return {'fulfillmentText': 'This is a response from webhook. params: ' + category + action}
+        }
+        print(finalJSON)
+        return(finalJSON)
+        #     storeList.append(card)
+        # print(storeList)
+        # for card in storeList:
+        #     return card
+
+    # return default fulfillment response
+    if(action != None):
+        return {'fulfillmentText': 'This is a response from webhook. params: ' + action}
     return{'fulfillmentText': 'This is a response from webhook.'}
 
 # create a route for webhook
 
 
-@app.route('/webhook', methods=['GET', 'POST'])
+@ app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
     # return response
     return make_response(jsonify(results()))
