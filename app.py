@@ -4,7 +4,12 @@ from flask import Flask, request, make_response, jsonify
 from firebase_admin import credentials, firestore, initialize_app
 import os
 import requests
+import json
 from df_response_lib import *
+from termcolor import colored
+import colorama
+
+colorama.init()
 
 # initialize the flask app
 app = Flask(__name__)
@@ -26,34 +31,36 @@ def results():
 
     # fetch action from json
     action = req.get('queryResult').get('action')
-    print(action)
-    parameters = req.get('queryResult').get('parameters').get('zip-code')
-    print(parameters)
+    print(colored("this is the action: " + action, "blue" , 'on_white'))
 
     if (action == "questionnaire"):
-        print(req.get('queryResult').get('outputContexts'))
+        # print(req.get('queryResult').get('outputContexts'))
+        category = req.get('queryResult').get('parameters').get('category')
+        print(colored("this is the category: " + category, "blue" , 'on_white'))
 
-    if (action == "DefaultWelcomeIntent.DefaultWelcomeIntent-next.DefaultWelcomeIntent-next-custom"):
-        zipParams = {"zipcode": parameters}
-        zipAPI = requests.get("https://us-zipcode.api.smartystreets.com/lookup?auth-id=508c10e2-e9eb-07b9-be72-2dab43c695f8&auth-token=aiA3a3D873JPzo9mLPm3", params = zipParams)
-        cityJSON = zipAPI.json()
-        city = cityJSON[0]["city_states"][0]["city"]
-        cities_ref = db.collection(u'cities')
+        zipCodeFromRequest = req.get('queryResult').get('outputContexts')[0].get('parameters').get('zip-code')
+        print(colored("this is the zip code from the request: " + zipCodeFromRequest, "blue" , 'on_white'))
+
+        if (zipCodeFromRequest == "77002"):
+            city = "Houston"
+        else:
+            zipParams = {"zipcode": zipCodeFromRequest}
+            zipAPI = requests.get("https://us-zipcode.api.smartystreets.com/lookup?auth-id=508c10e2-e9eb-07b9-be72-2dab43c695f8&auth-token=aiA3a3D873JPzo9mLPm3", params = zipParams)
+            cityJSON = zipAPI.json()
+            city = cityJSON[0]["city_states"][0]["city"]
+        print(colored("this is the city: " + city, "blue" , 'on_white'))
+
+        cities_ref = db.collection("cities").document(city).collection(category)
+        print("this is the document id: " + cities_ref.id)
         docs = cities_ref.stream()
+        storeList = []
         for doc in docs:
-            print(f'{doc.id} => {doc.to_dict()}')
-        
-        # returns city name from zipcode
-    #     return{'outputContexts': {
-    #   "name": "await_questionnare",
-    #   "parameters": {
-    #     "city": city
-    #   }
-    # }}
-
-
+            storeList.append(doc.to_dict())
+        print(storeList)
     # return a fulfillment response
-    # return {'fulfillmentText': 'This is a response from webhook.' + parameters + action}
+    if(category != None and action != None):
+        return {'fulfillmentText': 'This is a response from webhook. params: ' + category + action}
+    return{'fulfillmentText': 'This is a response from webhook.'}
 
 # create a route for webhook
 @app.route('/webhook', methods=['GET', 'POST'])
