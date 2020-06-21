@@ -4,8 +4,8 @@ from flask import Flask, request, make_response, jsonify
 from firebase_admin import credentials, firestore, initialize_app
 import os
 import requests
+import random
 import json
-from df_response_lib import *
 from termcolor import colored
 import colorama
 
@@ -15,8 +15,6 @@ colorama.init()
 app = Flask(__name__)
 
 # default route
-
-
 @app.route('/')
 def index():
     return 'Hello World!'
@@ -28,8 +26,6 @@ firebase_admin.initialize_app(cred)
 db = firestore.client()
 
 # function for responses
-
-
 def results():
     # build a request object
     req = request.get_json(force=True)
@@ -52,6 +48,8 @@ def results():
             city = "Houston"
         elif (zipCodeFromRequest == "76016"):
             city = "Arlington"
+        elif (zipCodeFromRequest == "85005"):
+            city="Phoenix"
         else:
             zipParams = {"zipcode": zipCodeFromRequest}
             zipAPI = requests.get(
@@ -67,19 +65,23 @@ def results():
 
         storeList = []
         card = None
+        i = 0
         for doc in docs:
-            storedata = doc.to_dict()
-            print("putting this into a card: " + storedata["name"])
-            card = {
-                "title": storedata["name"],
-                "openUrlAction": {
-                    "url": "https://example.com"
-                },
-                "description": storedata["contact"],
-                "footer": "Item 1 footer",
-            }
-            storeList.append(card)
-            storeList.append(card)
+            if (i <= 10):
+                storedata = doc.to_dict()
+                print("putting this into a card: " + storedata["name"])
+                card = {
+                    "title": storedata["name"],
+                    # "openUrlAction": {
+                    #     # "url": storedata["url"]
+                    # },
+                    "description": "Contact: " + storedata["contact"] + ',\n Address: ' + storedata["address"],
+                    "footer": "Item 1 footer",
+                }
+                storeList.append(card)
+                i+=1
+            else:
+                break
 
         finalJSON = {
             "payload": {
@@ -89,7 +91,7 @@ def results():
                         "items": [
                             {
                                 "simpleResponse": {
-                                    "textToSpeech": "Here's an example of a browsing carousel."
+                                    "textToSpeech": "Here's some local businesses!"
                                 }
                             },
                             {
@@ -106,25 +108,16 @@ def results():
         }
         print(finalJSON)
         return(finalJSON)
-        #     storeList.append(card)
-        # print(storeList)
-        # for card in storeList:
-        #     return card
 
     # return default fulfillment response
     if(action != None):
         return {'fulfillmentText': 'This is a response from webhook. params: ' + action}
     return{'fulfillmentText': 'This is a response from webhook.'}
 
+
 # create a route for webhook
-
-
 @ app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
     # return response
     return make_response(jsonify(results()))
 
-
-# run the app
-if __name__ == '__main__':
-    app.run()
