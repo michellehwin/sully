@@ -51,7 +51,7 @@ pyrealsense2==2.30.0.1184
 python-jsonrpc-server==0.3.4
 python-language-server==0.33.2
 pytz==2020.1
-PyYAML==5.3.1
+PyYAML==5.4
 regex==2020.6.8
 requests==2.23.0
 rsa==4.6
