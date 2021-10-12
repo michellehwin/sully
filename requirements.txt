@@ -37,7 +37,7 @@ MarkupSafe==1.1.1
 mccabe==0.6.1
 msgpack==1.0.0
 numpy==1.17.4
-opencv-contrib-python==4.1.1.26
+opencv-contrib-python==4.2.0.32
 parso==0.7.0
 pathspec==0.8.0
 pathtools==0.1.2
